@@ -16,7 +16,7 @@ double method_SSIM(const Mat& image1, const Mat& image2, int flag = 0)
 	Mat gray_image2;
 
 	cvtColor(image1, gray_image1, COLOR_BGR2GRAY);
-	if (flag == 0) // нужно дл€ сравнени€ оригинальной и серой фотографий, чтобы не переводить серую фотографию обратно в серую
+	if (flag == 0) // нужно для сравнения оригинальной и серой фотографий, чтобы не переводить серую фотографию обратно в серую
 		cvtColor(image2, gray_image2, COLOR_BGR2GRAY);
 	else
 		gray_image2 = image2.clone();
@@ -28,6 +28,7 @@ double method_SSIM(const Mat& image1, const Mat& image2, int flag = 0)
 	double cov = 0;
 	double c1 = 6.5025; // pow(((256 - 1) * 0,01), 2);
 	double c2 = 58.5225; // pow(((256 - 1) * 0,03), 2);
+	double c3 = c2 / 2;
 	int N = gray_image1.rows * gray_image1.cols;
 
 	for (int i = 0; i < gray_image1.rows; i++)
@@ -48,14 +49,15 @@ double method_SSIM(const Mat& image1, const Mat& image2, int flag = 0)
 			cov += abs((gray_image1.at<uchar>(i, j) - avg1) * (gray_image2.at<uchar>(i, j) - avg2));
 		}
 
-	disp1 /= N;
-	disp2 /= N;
-	cov /= N;
+	disp1 /= (N - 1);
+	disp2 /= (N - 1);
+	cov /= (N - 1);
 
-	double l = (2 * avg1 * avg2 + c1) / (pow(avg1, 2) + pow(avg2, 2) + c1); // €ркость
-	double q = (2 * cov + c2) / (disp1 + disp2 + c2); // объединение констраста и структуры
+	double l = (2 * avg1 * avg2 + c1) / (pow(avg1, 2) + pow(avg2, 2) + c1); // яркость
+	double q = (2 * sqrt(disp1) * sqrt(disp2) + c2) / (disp1 + disp2 + c2); // объединение констраста и структуры
+	double s = (cov + c3) / (sqrt(disp1) * sqrt(disp2) + c3);
 
-	double result = l * q;
+	double result = l * q * s;
 	return result;
 }
 
